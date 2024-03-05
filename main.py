@@ -1,5 +1,3 @@
-# main.py
-
 from flask import Flask, request, jsonify, render_template
 from asciify import generate_ascii_art
 import os
