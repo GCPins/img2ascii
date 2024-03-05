@@ -19,7 +19,7 @@ def your_endpoint():
         scale_factor = float(request.form['scale_factor'])
 
         # Save the uploaded file
-        file_path = os.path.join('uploads', file.filename)
+        file_path = os.path.join('uploads', str(file.filename))
         file.save(file_path)
 
         # Generate ASCII art
