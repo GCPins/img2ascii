@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="img2ascii - ASCII Art Generator" />
+    <meta property="og:description" content="Will convert a provided image to (black & white) ASCII art. Was created in Python for the 2024 CUHACKIT (Clemson University hackathon)." />
+    <meta property="og:image" content="https://t4.ftcdn.net/jpg/05/40/83/51/360_F_540835154_obSgbVJuLN0w72OlGIBUn4lW6i8XRIe3.jpg" />
+    <meta property="og:url" content="https://img2ascii.g0rg.tech" />
+    <title>ASCII Art Generator</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 50px;
+        }
+        #fileInput {
+            display: none;
+        }
+        #uploadedImage {
+            max-width: 100%;
+            max-height: 450px; 
+            margin: 10px auto; 
+            display: none;
+        }
+        @media only screen and (max-width: 600px) {
+        #uploadedImage {
+            max-height: 200px; 
+            }
+        }
+        #fileInputLabel {
+            padding: 9px; 
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        #scalingInput {
+            padding: 8px;
+            width: 45px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #generateButton {
+            padding: 10px; 
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+        #generateButton:disabled {
+            background-color: #ccc; 
+            color: black;
+            cursor: not-allowed;
+        }
+        #generateButton:enabled {
+            background-color: #4CAF50; 
+            color: white;
+            cursor: pointer;
+        }
+        #resultContainer {
+            max-height: 9999px;
+            overflow-y: auto;
+            white-space: pre;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        #copyButton, #saveButton {
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #copyButton:disabled, #saveButton:disabled {
+            padding: 10px;
+            background-color: #ccc;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed;
+            margin-top: 10px;
+        }
+        #clearButton {
+            padding: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+         #clearButton:disabled {
+            padding: 10px;
+            background-color: #ccc;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ASCII Art Generator</h1>
+    <p>Upload an image, choose a scaling factor, and click "Generate" to create ASCII art.</p>
+
+    <input type="file" id="fileInput" accept=".jpg, .jpeg, .png, .webp, .blp, .bmp, .dds, .dib, .eps, .ico, .svg, .pcx, .tiff" style="display: none;">
+    <label for="fileInput" id="fileInputLabel" title="Upload an Image">Choose Image</label>
+
+    <br>
+
+    <img id="uploadedImage" style="display: none;"> <button id="removeImageButton" onclick="removeImage()" style="display: none;" title="Remove the image">X</button>
+    <button id="recommendedSize" onclick="setRSize()" title="Set to the recommended dimensions for your device" style="display: none;">Recommended Scaling Factor</button>
+
+    <br>
+
+    <label for="scalingInput">Scaling Factor:</label>
+    <input type="number" id="scalingInput" placeholder="" step="0.1" title="Choose a number greater than 1 (demicals OK)" value="1" style="margin-top: 10px; padding: 5px;">x smaller
+
+    <br>
+    <div id="dimensions"></div>
+    <br>
+
+    <button id="generateButton" onclick="generate()" title="Generate the ASCII art" disabled>Generate</button>
+
+    <div id="resultContainer"></div>
+
+    <button id="copyButton" onclick="copyToClipboard()" title="Copy the ASCII art to your clipboard" disabled>Copy to Clipboard</button>
+    <button id="saveButton" onclick="saveToFile()" title="Save the ASCII art as a text file" disabled>Save</button>
+    <button id="clearButton" onclick="clearArt()" title="Get rid of the ASCII art" disabled>Clear</button>
+    <script>
+    function clearArt() {
+        const resultContainer = document.getElementById('resultContainer');
+        resultContainer.innerText = '';
+        copyButton.disabled = saveButton.disabled = clearButton.disabled = 1;
+    }
+    function removeImage() {
+        const fileInput = document.getElementById('fileInput');
+        const removeImageButton = document.getElementById('removeImageButton');
+        const generateButton = document.getElementById('generateButton');
+        const imagePreview = document.getElementById('uploadedImage');
+        const copyButton = document.getElementById('copyButton');
+        const saveButton = document.getElementById('saveButton');
+        const clearButton = document.getElementById('clearButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const rsButton = document.getElementById('recommendedSize');
+
+        fileInput.value = ''; 
+        rsButton.style.display = removeImageButton.style.display = 'none'; 
+        generateButton.disabled = true; 
+        if (!resultContainer.innerText || resultContainer.innerText === '') {
+            copyButton.disabled = true;
+            saveButton.disabled = true;
+            clearButton.disabled = true;
+        }
+        imagePreview.style.display = 'none';
+        clearDimensions();
+        document.getElementById('scalingInput').value = '1';
+    }
+
+    document.getElementById('fileInput').addEventListener('change', function () {
+        const removeImageButton = document.getElementById('removeImageButton');
+        const generateButton = document.getElementById('generateButton'); 
+        const rsButton = document.getElementById('recommendedSize');
+        
+        rsButton.style.display = removeImageButton.style.display = this.files.length > 0 ? 'inline-block' : 'none';
+        generateButton.disabled = this.files.length === 0;
+    });
+
+    function handleFileInputChange() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadedImage = document.getElementById('uploadedImage');
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    
+                    const img = new Image();
+                    img.onload = function () {
+                        const originalWidth = img.width;
+                        const originalHeight = img.height;
+                        const scaleFactor = parseFloat(document.getElementById('scalingInput').value);
+                        updateDimensions(originalWidth, originalHeight, scaleFactor);
+                    };
+                    img.src = e.target.result;
+
+                    uploadedImage.src = e.target.result;
+                    uploadedImage.style.display = 'block';
+                };
+
+                reader.readAsDataURL(file);
+                const genBut = document.getElementById('generateButton');
+                
+                genBut.disabled = 0;
+                document.getElementById('scalingInput').value = 1;
+                
+            } else {
+                uploadedImage.style.display = 'none';
+            }
+        }
+
+        document.getElementById('fileInput').addEventListener('change', handleFileInputChange);
+
+        document.getElementById('scalingInput').addEventListener('input', function() {
+            const fileInput = document.getElementById('fileInput');
+
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const originalWidth = img.width;
+                        const originalHeight = img.height;
+
+                        const scaleFactor = parseFloat(document.getElementById('scalingInput').value);
+
+                        updateDimensions(originalWidth, originalHeight, scaleFactor);
+                    };
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        });
+        function updateDimensions(originalWidth, originalHeight, scaleFactor) {
+            const scaledWidth = Math.round(originalWidth / scaleFactor);
+            const scaledHeight = Math.round(originalHeight / scaleFactor);
+            const dimensionsText = `(${originalWidth} x ${originalHeight}) -> (${scaledWidth} x ${scaledHeight})`;
+
+            const dimensionsElement = document.getElementById('dimensions');
+            dimensionsElement.innerText = dimensionsText;
+        }
+
+        function clearDimensions() {
+            const dimensionsElement = document.getElementById('dimensions');
+            dimensionsElement.innerText = '';
+        }
+
+        function setRSize() {
+            const scaleF = document.getElementById('scalingInput'); // scaleF.value will access the value 
+            const charSize = 8;
+            const maxW = window.innerWidth;
+            const maxH = window.innerHeight;
+
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const originalWidth = img.width;
+                        const originalHeight = img.height;
+      
+                        scaleF.value = parseFloat((originalHeight/(maxH/12)).toFixed(1)) + 0.5 /*margin of error*/;
+
+                        const scaleFactor = parseFloat(document.getElementById('scalingInput').value);
+
+                        updateDimensions(originalWidth, originalHeight, scaleFactor);
+                    };
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+        function generate() {
+            const fileInput = document.getElementById('fileInput');
+            const scaleInput = document.getElementById('scalingInput');
+            const generateButton = document.getElementById('generateButton');
+            const resultContainer = document.getElementById('resultContainer');
+
+            if (fileInput.files.length === 0) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            copyButton.disabled = saveButton.disabled = clearButton.disabled = 0;
+
+            const file = fileInput.files[0];
+            const scaleFactor = parseFloat(scaleInput.value);
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('scale_factor', (isNaN(scaleFactor) || scaleFactor <= 0) ? 1 : scaleFactor);
+
+            generateButton.disabled = true;
+            generateButton.innerText = "Generating...";
+
+            fetch('/api/generate_ascii', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultContainer.innerText = data.ascii_art;
+                generateButton.disabled = false;
+                generateButton.innerText = "Generate";
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                generateButton.disabled = false;
+                generateButton.innerText = "Generate";
+            });
+        }
+
+        function copyToClipboard() {
+            const resultContainer = document.getElementById('resultContainer');
+            const textarea = document.createElement('textarea');
+            textarea.value = resultContainer.innerText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('ASCII art copied to clipboard!');
+        }
+
+        function saveToFile() {
+            const resultContainer = document.getElementById('resultContainer');
+            const asciiArt = resultContainer.innerText;
+
+            const blob = new Blob([asciiArt], { type: 'text/plain' });
+
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'ascii_art.txt';
+            link.click();
+        }
+    </script>
+</body>
+</html>
