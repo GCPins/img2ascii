@@ -9,7 +9,7 @@ This was created for the Clemson CUHACKIT 2024 hackathon. The website allows you
 
 ### Live Demo
 A live demo (should) be found running live @ https://img2ascii.g0rg.tech 
-(alternative link: https://gcpins.pythonanywhere.com/)
+(alternative link: https://gcpins.pythonanywhere.com/  OR  https://img2ascii.gcpins.tech)
 
 You can also see the project in action in [this video](https://youtu.be/Jnx_sDX1dZY), albeit slightly outdated.
 
