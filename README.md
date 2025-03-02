@@ -8,8 +8,8 @@ This was created for the Clemson CUHACKIT 2024 hackathon. The website allows you
 4. Run the Flask server: `python main.py`
 
 ### Live Demo
-A live demo (should) be found running live @ https://img2ascii.g0rg.tech 
-(alternative link: https://gcpins.pythonanywhere.com/  OR  https://img2ascii.gcpins.tech)
+A live demo (should) be found running live @ https://img2ascii.gcpins.dev
+(alternative link: https://gcpins.pythonanywhere.com)
 
 You can also see the project in action in [this video](https://youtu.be/Jnx_sDX1dZY), albeit slightly outdated.
 
