@@ -7,6 +7,8 @@ This was created for the Clemson CUHACKIT 2024 hackathon. The website allows you
 3. Install the necessary packages with pip: `pip install -r requirements.txt` 
 4. Run the Flask server: `python main.py`
 
+There is also a Docker image you may build.
+
 ### Live Demo
 A live demo (should) be found running live @ https://img2ascii.gcpins.dev
 (alternative link: https://gcpins.pythonanywhere.com)
