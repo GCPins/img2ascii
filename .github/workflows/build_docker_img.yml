@@ -29,6 +29,9 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set lowercase repository name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
     - name: Build and push the Docker image
       uses: docker/build-push-action@v6
@@ -36,4 +39,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
+        tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}:latest
